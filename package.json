@@ -1,0 +1,22 @@
+{
+  "name": "4-row-game-backend",
+  "version": "1.0.0",
+  "description": "4 in a Row game backend server",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "analytics": "node analytics.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "pg": "^8.11.3",
+    "kafkajs": "^2.2.4",
+    "uuid": "^9.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
