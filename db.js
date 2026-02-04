@@ -25,12 +25,20 @@ async function connectDB(connectionString) {
   const parsed = parseConnectionString(connectionString);
   const dbName = parsed.database;
   
-  // Railway PostgreSQL requires SSL, detect if we're on Railway
-  const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_DEPLOYMENT_ID;
+  // Determine SSL configuration from connection string or environment
+  let sslConfig = false;
+  if (parsed.params && parsed.params.includes('sslmode=require')) {
+    sslConfig = { rejectUnauthorized: false };
+  } else if (parsed.params && parsed.params.includes('sslmode=disable')) {
+    sslConfig = false;
+  } else if (process.env.DATABASE_URL && !parsed.params.includes('sslmode=disable')) {
+    // Cloud providers (Vercel, etc.) typically require SSL
+    sslConfig = { rejectUnauthorized: false };
+  }
+  
   const poolConfig = {
     connectionString,
-    // Enable SSL for Railway PostgreSQL
-    ssl: isRailway ? { rejectUnauthorized: false } : false
+    ssl: sslConfig
   };
   
   let pool = new Pool(poolConfig);
@@ -46,7 +54,7 @@ async function connectDB(connectionString) {
       const adminConnStr = buildConnectionString(parsed, 'postgres');
       const adminPoolConfig = {
         connectionString: adminConnStr,
-        ssl: isRailway ? { rejectUnauthorized: false } : false
+        ssl: sslConfig
       };
       const adminPool = new Pool(adminPoolConfig);
       

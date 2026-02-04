@@ -10,21 +10,22 @@ const { newBoard, PLAYER1, PLAYER2, checkWin, checkDraw, getOpponent, validateMo
 const Bot = require('./bot');
 const Matchmaking = require('./matchmaking');
 
-// Build database connection string from Railway env vars or use DATABASE_URL
+// Build database connection string from environment variables
 function getDatabaseConnectionString() {
-  // If DATABASE_URL is set (Railway provides this), use it
+  // If DATABASE_URL is set (Vercel/cloud providers provide this), use it
   if (process.env.DATABASE_URL) {
     return process.env.DATABASE_URL;
   }
   
-  // Otherwise, try to build from individual Railway PostgreSQL env vars
+  // Otherwise, try to build from individual PostgreSQL env vars
   if (process.env.PGUSER && process.env.PGPASSWORD && process.env.PGHOST && process.env.PGPORT && process.env.PGDATABASE) {
     const user = encodeURIComponent(process.env.PGUSER);
     const password = encodeURIComponent(process.env.PGPASSWORD);
     const host = process.env.PGHOST;
     const port = process.env.PGPORT;
     const database = process.env.PGDATABASE;
-    return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+    const sslMode = process.env.PGSSLMODE || 'require';
+    return `postgresql://${user}:${password}@${host}:${port}/${database}?sslmode=${sslMode}`;
   }
   
   // Fallback to local development
