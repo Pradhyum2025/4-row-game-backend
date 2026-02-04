@@ -10,7 +10,28 @@ const { newBoard, PLAYER1, PLAYER2, checkWin, checkDraw, getOpponent, validateMo
 const Bot = require('./bot');
 const Matchmaking = require('./matchmaking');
 
-const DB_CONN_STR = process.env.DATABASE_URL || 'postgres://postgres:PostGre%402025@localhost:5432/connectfour?sslmode=disable';
+// Build database connection string from Railway env vars or use DATABASE_URL
+function getDatabaseConnectionString() {
+  // If DATABASE_URL is set (Railway provides this), use it
+  if (process.env.DATABASE_URL) {
+    return process.env.DATABASE_URL;
+  }
+  
+  // Otherwise, try to build from individual Railway PostgreSQL env vars
+  if (process.env.PGUSER && process.env.PGPASSWORD && process.env.PGHOST && process.env.PGPORT && process.env.PGDATABASE) {
+    const user = encodeURIComponent(process.env.PGUSER);
+    const password = encodeURIComponent(process.env.PGPASSWORD);
+    const host = process.env.PGHOST;
+    const port = process.env.PGPORT;
+    const database = process.env.PGDATABASE;
+    return `postgresql://${user}:${password}@${host}:${port}/${database}`;
+  }
+  
+  // Fallback to local development
+  return 'postgres://postgres:PostGre%402025@localhost:5432/connectfour?sslmode=disable';
+}
+
+const DB_CONN_STR = getDatabaseConnectionString();
 const KAFKA_BROKER = process.env.KAFKA_BROKER || 'localhost:9092';
 const KAFKA_TOPIC = process.env.KAFKA_TOPIC || 'game-events';
 const PORT = process.env.PORT || 8080;
@@ -503,7 +524,7 @@ async function main() {
     console.log('Frontend dist not found, skipping static file serving');
   }
   
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`Server starting on port ${PORT}`);
   });
   

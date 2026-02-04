@@ -1,16 +1,17 @@
 const { Pool } = require('pg');
 
 function parseConnectionString(connStr) {
-  const match = connStr.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
+  // Support both postgres:// and postgresql:// protocols
+  const match = connStr.match(/postgres(ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
   if (!match) {
     throw new Error('Invalid connection string format');
   }
   return {
-    user: match[1],
-    password: match[2],
-    host: match[3],
-    port: match[4],
-    database: match[5],
+    user: match[2],
+    password: match[3],
+    host: match[4],
+    port: match[5],
+    database: match[6],
     params: connStr.includes('?') ? connStr.split('?')[1] : ''
   };
 }
@@ -24,7 +25,15 @@ async function connectDB(connectionString) {
   const parsed = parseConnectionString(connectionString);
   const dbName = parsed.database;
   
-  let pool = new Pool({ connectionString });
+  // Railway PostgreSQL requires SSL, detect if we're on Railway
+  const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_DEPLOYMENT_ID;
+  const poolConfig = {
+    connectionString,
+    // Enable SSL for Railway PostgreSQL
+    ssl: isRailway ? { rejectUnauthorized: false } : false
+  };
+  
+  let pool = new Pool(poolConfig);
   
   try {
     await pool.query('SELECT 1');
@@ -35,7 +44,11 @@ async function connectDB(connectionString) {
       console.log(`Database "${dbName}" does not exist. Creating it...`);
       
       const adminConnStr = buildConnectionString(parsed, 'postgres');
-      const adminPool = new Pool({ connectionString: adminConnStr });
+      const adminPoolConfig = {
+        connectionString: adminConnStr,
+        ssl: isRailway ? { rejectUnauthorized: false } : false
+      };
+      const adminPool = new Pool(adminPoolConfig);
       
       try {
         await adminPool.query('SELECT 1');
@@ -55,7 +68,7 @@ async function connectDB(connectionString) {
         }
         await adminPool.end();
         
-        pool = new Pool({ connectionString });
+        pool = new Pool(poolConfig);
         await pool.query('SELECT 1');
         console.log(`Connected to PostgreSQL database: ${dbName}`);
         return pool;
