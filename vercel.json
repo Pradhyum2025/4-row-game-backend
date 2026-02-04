@@ -3,13 +3,33 @@
   "builds": [
     {
       "src": "package.json",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "maxLambdaSize": "50mb"
+      }
     }
   ],
   "routes": [
     {
+      "src": "/ws",
+      "dest": "/"
+    },
+    {
+      "src": "/health",
+      "dest": "/"
+    },
+    {
+      "src": "/leaderboard",
+      "dest": "/"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }
-  ]
+  ],
+  "functions": {
+    "index.js": {
+      "maxDuration": 60
+    }
+  }
 }
