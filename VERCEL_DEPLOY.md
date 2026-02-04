@@ -1,6 +1,13 @@
 # Deploying Backend to Vercel
 
-This backend is configured to deploy on Vercel using Docker containers.
+⚠️ **Important Note**: Vercel is designed for serverless functions and static sites. **WebSocket servers with persistent connections are not well-supported** on Vercel's platform. For a WebSocket-based game backend, consider using:
+- **Railway** (supports Docker containers and long-running processes)
+- **Render** (supports Docker containers)
+- **Fly.io** (supports Docker containers)
+- **DigitalOcean App Platform** (supports Docker containers)
+- **AWS ECS/Fargate** or **Google Cloud Run** (container platforms)
+
+However, if you still want to deploy on Vercel, this configuration will deploy it as a Node.js application.
 
 ## Prerequisites
 
@@ -41,15 +48,17 @@ The backend automatically:
 - Enables SSL for cloud PostgreSQL connections
 - Creates the database schema automatically on first run
 
-## Docker Deployment
+## Limitations
 
-Vercel will automatically detect the `Dockerfile` and build a Docker container. The container:
-- Uses Node.js 18
-- Exposes port 8080
-- Runs `npm start` on container start
+- **WebSocket connections may not work reliably** on Vercel due to serverless architecture
+- Long-running connections may timeout
+- Consider using a platform that supports Docker containers for WebSocket servers
 
-## Notes
+## Alternative: Use Docker on Railway/Render/Fly.io
 
-- WebSocket connections are supported through Vercel's Docker container platform
-- Make sure your PostgreSQL database allows connections from Vercel's IP ranges
-- SSL is automatically enabled for cloud PostgreSQL connections
+For proper WebSocket support, deploy using Docker on platforms that support containers:
+- Railway: Supports Dockerfiles natively
+- Render: Supports Dockerfiles
+- Fly.io: Supports Dockerfiles
+
+The `Dockerfile` in this directory can be used on these platforms.
